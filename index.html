@@ -1,0 +1,291 @@
+<!doctype html>
+<html class="no-js" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>TVHOST</title>
+    </head>
+    <body>
+        <div class="container">
+            <div id="header">{header}</div>
+            <div id="content">
+                {content}
+            </div>
+            <div id="footer">{footer}</div>
+        </div>
+    </body>
+</html>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
+<script>
+    $(function(){
+
+        // title info
+        $("title").text("TVHOST archive")
+
+        // header info
+        const url = new URL(window.location.href);
+        const params = url.searchParams;
+        if (params.has("ch")){
+            $("#header").text("Select a channel:")
+            $.cookie('ch', params.get("ch"), { expires: 1, path: '/' });
+        }else if(params.has("chid")){
+            const $f = $(".epg-item.first a")
+            $f.click(function(){
+                return !1
+            })
+
+            $f.html($f.html()+"<span class=\"rec\">REC</span>")
+        }else if(params.has("id")){
+            var cnt = 0
+            var flag = true
+            const slider = document.getElementById('player-slider-input');
+            slider.addEventListener('input', function() {
+                const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+                slider.style.background = `linear-gradient(to right, red 0%, red ${value}%, #ddd ${value}%, #ddd 100%)`;
+            });
+
+            $("#player-slider-input").on('input change', function(e) {
+                const pos = e.target.value * 60
+                $.get("/?id="+params.get("id")+"&pos="+pos, function(r){
+                    if(r==="OK"){
+                        cnt = pos;
+                        setPosition();
+                        flag = true
+                    }
+                })
+            })
+
+            $("#player-slider-input").mousedown(function(e){
+                flag = false
+            })
+
+            setInterval(function(){
+                if (cnt <= slider.max * 60 && flag){
+                    setPosition();
+                    cnt++;
+                }
+            }, 1000)
+
+            function setPosition(){
+                $("#player-position-now").text(formatTime(cnt))
+                $("#player-slider-input").val(Math.floor(cnt / 60))
+                const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+                slider.style.background = `linear-gradient(to right, red 0%, red ${value}%, #ddd ${value}%, #ddd 100%)`;
+            }
+        }
+
+
+        // footer info
+        const currentYear = new Date().getFullYear();
+        $("#footer").html("&copy; "+currentYear+" Copyright <a href='https://tvhost.cc' target='_blank'>TVHOST.CC</a>")
+
+
+
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            const formattedHours = String(hours).padStart(2, '0');
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(secs).padStart(2, '0');
+            return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+        }
+
+    })
+</script>
+<style>
+    html,body{
+        background-color: black;
+        color: #eee;
+        font: 42px/1.2em Arial;
+    }
+    .error{
+        color: red;
+        font-size: 68px;
+        margin-bottom:100px;
+    }
+    a{
+        color: rgb(152, 198, 245)
+    }
+    .container{
+        text-align: center;
+    }
+    #header{
+        font:bold 64px/1.2em Arial;
+        margin:50px;
+        padding-bottom:30px;
+        border-bottom: 1px solid #ccdffc;
+    }
+    #footer{
+        padding-top:50px;
+        font:32px/1em Arial;
+        color: rgb(9, 122, 235)
+    }
+    .logo-wrap {
+        display: inline-block;
+        position: relative;
+    }
+    .logotypes img{
+        cursor: pointer;
+        padding:2px;
+        margin:5px;
+        border: 3px solid #dbd9d9;
+        border-radius: 10px;
+    }
+    .logotypes img:hover{
+        border: 3px solid red;
+    }
+    a.logotypes {
+        display: block;
+        position:fixed;
+    }
+    .logo-title{
+        display:inline;
+        position:absolute;
+        background-color: #000;
+        color: #fff;
+        bottom: 20px;
+        left:10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width:210px;
+        font-size:28px;
+        opacity:0.8;
+    }
+    td.time{
+        color:aqua;
+        font-size:48px;
+        vertical-align: top;
+    }
+    td.title{
+        text-align: right;
+        vertical-align: top;
+    }
+    .epg{
+        position: relative;
+        border-top: 3px solid #888;
+        margin-top: 70px;
+        padding-top: 70px;
+        font: 42px/1.1em Tahoma;
+    }
+    .epg-day{
+        width: 400px;
+        position: absolute;
+        top: -35px;
+        padding: 10px 0px;
+        left: 35px;
+        text-align: center;
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        border-radius: 10px;
+    }
+    .epg-item{
+        text-align: left;
+        margin-bottom:30px;
+    }
+    .epg-item.first{
+        background-color:#d4edda;
+        color:#155724;
+        padding:10px 0;
+    }
+    .epg-item.first a{
+        text-decoration: none;
+        color:#155724;
+    }
+    .epg-item-title{
+        padding-left:20px;
+    }
+    .rec {
+        font-size: 20px;
+        padding:7px 2px;
+        border-radius: 50%;
+        margin-left:10px;
+        animation: flash 1s infinite;
+        position:relative;
+        bottom:5px;
+    }
+    @keyframes flash {
+        0%, 100% { background-color: red; color:white } /* Цвет текста красный в начале и конце */
+        50% { background-color: transparent; } /* Цвет текста прозрачный на половине периода */
+    }
+
+
+
+            /* Стиль самого слайдера */
+        input[type="range"] {
+            -webkit-appearance: none;  /* Убираем стандартный стиль */
+            width: 98%;
+            height: 15px;  /* Высота трека */
+            background: linear-gradient(to right, red 0%, red 0%, #ddd 0%);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+
+        /* Стиль ползунка */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; /* Убираем стандартный стиль */
+            appearance: none;
+            width: 50px;  /* Ширина ползунка */
+            height: 50px;  /* Высота ползунка */
+            background: #097aeb;
+            cursor: pointer;
+            border-radius: 50%;  /* Скругленные углы */
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 50px;  /* Ширина ползунка */
+            height: 50px;  /* Высота ползунка */
+            background: #097aeb;
+            cursor: pointer;
+            border-radius: 50%;  /* Скругленные углы */
+        }
+
+    .logo-img{
+        width:70px;
+        height:70px;
+        position:relative;
+        top:10px;
+        right:20px;
+    }
+
+    .player-date{
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .player-title{
+        text-align: left;
+        color: #097aeb;
+        font-size: 1.25em;
+        font-style: italic;
+        margin-bottom: 100px;
+    }
+
+    .player-position{
+        display: flex;
+        justify-content: space-between;
+    }
+
+    a.player-leave{
+        display:inline-block;
+        margin-top:100px;
+        padding:10px 20px;
+        border: 3px solid #fff;
+        text-decoration: none;
+        background-color: rgb(228, 2, 2);
+    }
+    .player-error{
+        padding:30px;
+        background-color: rgb(228, 2, 2);
+        margin-bottom:30px;
+    }
+
+</style>
